@@ -1,8 +1,11 @@
 package com.server;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+
 import javax.json.Json;
-import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
 import javax.websocket.OnMessage;
@@ -24,21 +27,25 @@ public class WebSocketServer
     
     @OnMessage
     public void onMessage(String message, Session session) {
-        Object[][] x = new Object[8][8];
         System.out.println("onMessage::From=" + session.getId() + " Message=" + message);
-        JsonArrayBuilder boardBuilder = Json.createArrayBuilder();
-        for (Object[] row: x) {
-            JsonArrayBuilder rowBuilder = Json.createArrayBuilder();
-            for (Object colum: row) {
-                rowBuilder.add(Json.createObjectBuilder()
-                .add("name", "queen")
-                .add("isWhite", false).build());
-            }
-            boardBuilder.add(rowBuilder);
-        }
+        JsonReader reader = Json.createReader(new StringReader(message));
+        JsonObject jsonMessage = reader.readObject();
+        String type = jsonMessage.getString("type");
         try {
-            session.getBasicRemote().sendText(Json.createObjectBuilder().add("board", boardBuilder).build().toString());
+            System.out.println("action type:" +  type);
+            if(TaskHandler.taskList.get(type) != null){
+                String result = (String) TaskHandler.taskList.get(type).invoke(null);
+                session.getBasicRemote().sendText(result);
+            }
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch(InvocationTargetException e) {
+            e.printStackTrace();
+        } catch(Exception e) {
             e.printStackTrace();
         }
     }
