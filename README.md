@@ -1,2 +1,2 @@
 # chess-server
-It's chess server side
+It's chess server side :)
